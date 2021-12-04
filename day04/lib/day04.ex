@@ -5,7 +5,7 @@ defmodule Day04 do
       |> File.stream!()
       |> parse_game()
 
-    {board, number} = winner(game.numbers, game.boards)
+    {board, number} = winners(game.numbers, game.boards) |> List.last()
 
     sum(board) * String.to_integer(number)
   end
@@ -16,6 +16,25 @@ defmodule Day04 do
     |> Stream.reject(&(&1 == :x))
     |> Stream.map(&String.to_integer/1)
     |> Enum.sum()
+  end
+
+  def winners(numbers, boards) do
+    Enum.reduce_while(numbers, {boards, []}, fn number, {boards, winners} ->
+      result =
+        Enum.reduce(boards, {[], winners}, fn board, {acc, winners} ->
+          board = mark(board, number)
+
+          cond do
+            win?(board) -> {acc, winners ++ [{board, number}]}
+            :otherwise -> {acc ++ [board], winners}
+          end
+        end)
+
+      case result do
+        {[], winners} -> {:halt, winners}
+        {boards, winners} -> {:cont, {boards, winners}}
+      end
+    end)
   end
 
   def winner(numbers, boards) do
